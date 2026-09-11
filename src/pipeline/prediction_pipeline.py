@@ -129,11 +129,24 @@ class PredictionPipeline:
                 class_id = int(predicted_classes[idx].item())
                 confidence = float(probabilities[idx, class_id].item())
                 label = CORA_CLASS_LABELS.get(class_id, f"Class_{class_id}")
+                prob_row = (
+                    probabilities[idx].detach().cpu().numpy().tolist()
+                    if hasattr(probabilities[idx], "detach")
+                    else list(probabilities[idx])
+                )
+                logit_row = (
+                    logits[idx].detach().cpu().numpy().tolist()
+                    if hasattr(logits[idx], "detach")
+                    else list(logits[idx])
+                )
                 results.append({
                     "node_index": int(idx),
                     "predicted_class_id": class_id,
+                    "predicted_class_name": label,
                     "topic_label": label,
                     "confidence": round(confidence, 4),
+                    "probabilities": [round(p, 6) for p in prob_row],
+                    "logits": [round(l, 6) for l in logit_row],
                 })
             return results
         except Exception as e:
@@ -180,10 +193,34 @@ class PredictionPipeline:
                 results.append({
                     "node_index": int(idx),
                     "predicted_class_id": class_id,
+                    "predicted_class_name": label,
                     "topic_label": label,
                     "confidence": round(confidence, 4),
+                    "probabilities": [round(float(p), 6) for p in probabilities[idx].tolist()],
+                    "logits": [round(float(l), 6) for l in logits[idx].tolist()],
                 })
             return results
         except Exception as e:
             logger.error("Failed during ONNX prediction")
             raise CustomException(e, sys)
+
+    def get_onnx_info(self) -> Dict[str, Any]:
+        """Retrieves ONNX runtime session metadata, inputs, and outputs."""
+        try:
+            session = self.load_onnx_model()
+            return {
+                "model_path": str(self.onnx_model_path),
+                "providers": session.get_providers(),
+                "inputs": [
+                    {"name": inp.name, "shape": inp.shape, "type": inp.type}
+                    for inp in session.get_inputs()
+                ],
+                "outputs": [
+                    {"name": out.name, "shape": out.shape, "type": out.type}
+                    for out in session.get_outputs()
+                ],
+            }
+        except Exception as e:
+            logger.error("Failed to retrieve ONNX session info")
+            raise CustomException(e, sys)
+

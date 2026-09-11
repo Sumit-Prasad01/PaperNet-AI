@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from src.constants import CONFIG_FILE_PATH
+from src.constants import CONFIG_FILE_PATH, PROJECT_ROOT
 from src.entity import (
     DataIngestionConfig,
     ModelArchitectureConfig,
@@ -19,18 +19,25 @@ class ConfigurationManager:
     def __init__(self, config_filepath: Path = CONFIG_FILE_PATH):
         try:
             self.config = read_yaml(config_filepath)
-            artifacts_root = self.config.get("artifacts_root", "artifacts")
+            artifacts_root_str = self.config.get("artifacts_root", "artifacts")
+            artifacts_root = (
+                PROJECT_ROOT / artifacts_root_str
+                if not Path(artifacts_root_str).is_absolute()
+                else Path(artifacts_root_str)
+            )
             create_directories([artifacts_root])
             logger.info(f"Initialized ConfigurationManager with config: {config_filepath}")
         except Exception as e:
             logger.error("Failed to initialize ConfigurationManager")
             raise CustomException(e, sys)
 
+
     def get_data_ingestion_config(self) -> DataIngestionConfig:
         """Constructs and returns DataIngestionConfig."""
         try:
             config = self.config["data_ingestion"]
-            root_dir = Path(config["root_dir"])
+            raw_root = Path(config["root_dir"])
+            root_dir = PROJECT_ROOT / raw_root if not raw_root.is_absolute() else raw_root
             create_directories([root_dir])
 
             data_ingestion_config = DataIngestionConfig(
@@ -65,7 +72,8 @@ class ConfigurationManager:
         """Constructs and returns ModelTrainerConfig."""
         try:
             config = self.config["model_trainer"]
-            root_dir = Path(config["root_dir"])
+            raw_root = Path(config["root_dir"])
+            root_dir = PROJECT_ROOT / raw_root if not raw_root.is_absolute() else raw_root
             create_directories([root_dir])
 
             model_name = config["model_name"]
@@ -98,8 +106,12 @@ class ConfigurationManager:
         """Constructs and returns ModelEvaluationConfig."""
         try:
             config = self.config["model_evaluation"]
-            root_dir = Path(config["root_dir"])
+            raw_root = Path(config["root_dir"])
+            root_dir = PROJECT_ROOT / raw_root if not raw_root.is_absolute() else raw_root
             create_directories([root_dir])
+
+            raw_onnx = Path(config["onnx_model_path"])
+            onnx_model_path = PROJECT_ROOT / raw_onnx if not raw_onnx.is_absolute() else raw_onnx
 
             model_evaluation_config = ModelEvaluationConfig(
                 root_dir=root_dir,
@@ -107,10 +119,11 @@ class ConfigurationManager:
                 classification_report_file=root_dir / config["classification_report_file"],
                 confusion_matrix_plot=root_dir / config["confusion_matrix_plot"],
                 training_curves_plot=root_dir / config["training_curves_plot"],
-                onnx_model_path=Path(config["onnx_model_path"]),
+                onnx_model_path=onnx_model_path,
                 onnx_opset_version=int(config.get("onnx_opset_version", 18)),
             )
             return model_evaluation_config
         except Exception as e:
             logger.error("Failed to retrieve ModelEvaluationConfig")
             raise CustomException(e, sys)
+

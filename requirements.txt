@@ -11,3 +11,6 @@ onnxscript
 onnx 
 onnxruntime
 pyyaml
+fastapi
+uvicorn
+httpx

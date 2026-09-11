@@ -1,3 +1,5 @@
 from pathlib import Path
 
-CONFIG_FILE_PATH = Path("config/config.yaml")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CONFIG_FILE_PATH = PROJECT_ROOT / "config" / "config.yaml"
+
