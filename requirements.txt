@@ -7,3 +7,7 @@ scikit-learn
 networkx
 torchinfo
 lightgbm
+onnxscript 
+onnx 
+onnxruntime
+pyyaml

@@ -1,0 +1,41 @@
+artifacts_root: artifacts
+
+data_ingestion:
+  root_dir: artifacts/data
+  dataset_name: cora
+
+model_architecture:
+  hidden_dim: 128
+  num_layers: 3
+  heads: 4
+  dropout: 0.35
+  attention_dropout: 0.20
+  classifier_dropout_1: 0.40
+  classifier_dropout_2: 0.25
+  jk_mode: cat
+
+model_trainer:
+  root_dir: artifacts/models
+  model_name: advanced_cora_gatv2.pt
+  seed: 42
+  epochs: 400
+  patience: 60
+  learning_rate: 0.003
+  weight_decay: 0.0005
+  edge_dropout_p: 0.10
+  label_smoothing: 0.05
+  max_grad_norm: 2.0
+  lr_scheduler_factor: 0.5
+  lr_scheduler_patience: 15
+  lr_scheduler_min_lr: 0.00001
+  log_every_n_epochs: 10
+  device: auto
+
+model_evaluation:
+  root_dir: artifacts/evaluation
+  metrics_file: metrics.json
+  classification_report_file: classification_report.txt
+  confusion_matrix_plot: confusion_matrix.png
+  training_curves_plot: training_curves.png
+  onnx_model_path: artifacts/models/advanced_cora_gatv2.onnx
+  onnx_opset_version: 18
